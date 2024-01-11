@@ -1,0 +1,24 @@
+Objetivos: 
+ Implementar un sistema de optimización de rutas usando grafos en lenguaje C.
+ Aplicar los conceptos de estructuras de datos aprendidos en la asignatura. 
+ Desarrollar habilidades de programación en C.
+
+Para la solución de este planteamiento se utilizará el algoritmo de Dijkstra.
+
+se pide desarrollar una aplicación que permita a una empresa de transporte entregar paquetes a diferentes destinos 
+en el menor tiempo. Para determinar el tiempo de recorrido, se establece que 100 mts se recorren en una hora.
+
+Requisitos: 
+ El sistema debe permitir realizar la carga inicial de las ubicaciones (Nodos) y las rutas (Aristas) del grafo.
+Para la representación del mismo se puede usar matriz de pesos o Listas enlazadas. (Se deja a elección del equipo).
+Considerar máximo 10 ubicaciones.
+Los datos iniciales deben estar almacenados en un archivo de texto que debe tener la siguiente estructura: 
+     Origen: La ubicación de origen de la ruta. 
+     Destino: La ubicación de destino de la ruta. 
+     Distancia: La distancia entre las ubicaciones de origen y destino. 
+     Tiempo: El tiempo de viaje entre las ubicaciones de origen y destino.  Costo: El costo de la ruta.
+
+Considerar máximo 10 ubicaciones.  El sistema debe permitir a los usuarios realizar las siguientes operaciones: 
+ Mostrar todas las rutas a cualquier destino dado un Origen.
+ Mostrar la ruta más óptima entre un punto de origen y un destino dados.
+**En ambos casos indicar distancia y tiempo total de recorrido.
