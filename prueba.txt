@@ -1,0 +1,12 @@
+Origen | Destino | Distancia | Tiempo
+A      | B       | 200       | 2 horas
+A      | C       | 200       | 1 hora
+A      | D       | 200       | 2 horas
+A      | E       | 200       | 2 horas
+A      | F       | 200       | 1 hora
+A      | G       | 200       | 2 horas
+A      | B       | 200       | 2 horas
+C      | B       | 200       | 1 hora
+D      | C       | 200       | 2 horas
+F      | G       | 200       | 2 horas
+B      | F       | 200       | 1 hora
