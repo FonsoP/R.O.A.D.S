@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define LOCALIZACIONES_MAXIMA 10
 
@@ -10,14 +11,13 @@ typedef struct {
 } Rutas;
 
 // Prototipo de funciones:
-// Prototipo de función para validar rango ASCII
 int ValidarRangoLetras(char caracter);
 void InicializarGrafo(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA]);
 void CargarRutas(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], const char* filename);
 void dijkstra(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], int nodo_origen, float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
-void MostrarRutaOptima(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], char origin, char destination, int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
-void MostrarRutasDadoOrigen(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], char origin, float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
-void showMenu(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
+void MostrarRutaOptima(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], char origen, char destino, int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
+void MostrarRutasDadoOrigen(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], char origen, float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
+void MostrarMenu(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]);
 
 int main() {
     Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA];
@@ -34,16 +34,16 @@ int main() {
         nodos_anteriores[i] = -1; // Inicializar todos los nodos anteriores a -1.
     }
 
-    // int sourceNode = 1;
+    // int nodo_origen_busqueda = 1;
     
     float distancias[LOCALIZACIONES_MAXIMA]; // Cambiado a float
     for (int i = 0; i < LOCALIZACIONES_MAXIMA; i++) {
         distancias[i] = INT_MAX;
     }
 	
-    // dijkstra(grafo, sourceNode, distancias, nodos_anteriores);
+    // dijkstra(grafo, nodo_origen_busqueda, distancias, nodos_anteriores);
 
-    showMenu(grafo, distancias, nodos_anteriores);
+    MostrarMenu(grafo, distancias, nodos_anteriores);
 
     return 0;
 }
@@ -68,92 +68,96 @@ void CargarRutas(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], cons
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
         printf("Error al abrir el archivo\n");
-        return;
+        exit(-1); // Salir del programa
     }
 
-    char line[100];
-    char origin, destination;
+    char linea[100];
+    char origen, destino;
     float distancia, horas; // Cambiado a float.
 
-    while (fgets(line, sizeof(line), file) != NULL) {
-        if (sscanf(line, " %c | %c | %f | %f hora", &origin, &destination, &distancia, &horas) == 4) {
-            int originIndex = origin - 'A';
-            int destinationIndex = destination - 'A';
+    while (fgets(linea, sizeof(linea), file) != NULL) {
+        if (sscanf(linea, " %c | %c | %f | %f hora", &origen, &destino, &distancia, &horas) == 4) {
+            int indice_origen = origen - 'A';
+            int indice_relativo = destino - 'A'; // Indice de destino o relativo (es aquel relacionado con el origen)
 
-            grafo[originIndex][destinationIndex].distancia = distancia;
-            grafo[originIndex][destinationIndex].horas = horas;
+			// Validar si la relación entre distancia y horas es lógica
+            if (distancia / 100 != horas) {
+                printf("Error: Los valores de distancia y horas no muestran correspondencia logica.\n");
+                exit(-1);  // Salir del programa
+            }
+
+            grafo[indice_origen][indice_relativo].distancia = distancia;
+            grafo[indice_origen][indice_relativo].horas = horas;
         }
     }
 
     fclose(file);
-    
-    // Verificar que se esta guardando:
     
 }
 
 // Función dijkstra solicitada:
 /* Función adaptada para arreglos vista en clase */
 void dijkstra(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], int nodo_origen, float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
-    bool visited[LOCALIZACIONES_MAXIMA] = {false};
+    bool visitado[LOCALIZACIONES_MAXIMA] = {false};
 
     distancias[nodo_origen] = 0;
     nodos_anteriores[nodo_origen] = -1; // Para el nodo nodo de origen, no hay nodo anterior.
 
-    for (int count = 0; count < LOCALIZACIONES_MAXIMA - 1; count++) {
-        float minDistance = INT_MAX; 
-		int  minIndex;
+    for (int i = 0; i < LOCALIZACIONES_MAXIMA - 1; i++) {
+        float distancia_minima = INT_MAX; // Inicialización de la única distancia númerica la cual no sería lógica (a parte de valores negativos)
+		int  indice_distancia_minima;
 	
         for (int v = 0; v < LOCALIZACIONES_MAXIMA; v++) {
-            if (!visited[v] && distancias[v] < minDistance) {
-                minDistance = distancias[v];
-                minIndex = v;
+            if (!visitado[v] && distancias[v] < distancia_minima) {
+                distancia_minima = distancias[v];
+                indice_distancia_minima = v;
             }
         }
 
-        visited[minIndex] = true;
+        visitado[indice_distancia_minima] = true;
 		
         for (int v = 0; v < LOCALIZACIONES_MAXIMA; v++) {
-            if (!visited[v] && grafo[minIndex][v].distancia != INT_MAX &&
-                distancias[minIndex] != INT_MAX &&
-                distancias[minIndex] + grafo[minIndex][v].distancia < distancias[v]) {
-                distancias[v] = distancias[minIndex] + grafo[minIndex][v].distancia;
-                nodos_anteriores[v] = minIndex; // Almacenar el nodo anterior para reconstruir el recorrido.
+            if (!visitado[v] && grafo[indice_distancia_minima][v].distancia != INT_MAX &&
+                distancias[indice_distancia_minima] != INT_MAX &&
+                distancias[indice_distancia_minima] + grafo[indice_distancia_minima][v].distancia < distancias[v]) {
+                distancias[v] = distancias[indice_distancia_minima] + grafo[indice_distancia_minima][v].distancia;
+                nodos_anteriores[v] = indice_distancia_minima; // Almacenar el nodo anterior para reconstruir el recorrido.
             }
         }
     }
 }
 
-void MostrarRutaOptima(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], char origin, char destination, int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
+void MostrarRutaOptima(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], char origen, char destino, int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
     
     // Inicialización ASCII, se asume que el destino y el origen están en un rango A-Z
-	int originIndex = origin - 'A';
-    int destIndex = destination - 'A';
+	int indice_origen = origen - 'A';
+    int indice_destino = destino - 'A';
 	
 	/* Nota del programador: Se asume que en este caso el valor es el de inicialización que teóricamente es imposible como distancia lógica */
 	
-    if (distancias[destIndex] == INT_MAX) {
-        printf("\nNo hay forma de llegar desde %c hasta %c\n", origin, destination);
+    if (distancias[indice_destino] == INT_MAX) {
+        printf("\nNo hay forma de llegar desde %c hasta %c\n", origen, destino);
         return;
     }
 
-    printf("\nRuta mas optima desde %c hasta %c:\n", origin, destination);
+    printf("\nRuta mas optima desde %c hasta %c:\n", origen, destino);
     printf("Distancia\tTiempo (en horas)\tRecorrido\n");
 
 	// Se hace la conversión según las condiciones dadas
-    printf("%.2f\t\t%.2f horas\t\t", distancias[destIndex], (float)distancias[destIndex] / 100);
+    printf("%.2f\t\t%.2f horas\t\t", distancias[indice_destino], (float)distancias[indice_destino] / 100);
 
     // Almacena el recorrido en un array para invertirlo.
-    char route[LOCALIZACIONES_MAXIMA];
-    int length = 0;
-    int current = destIndex;
-    while (current != -1) {
-        route[length++] = current + 'A';
-        current = nodos_anteriores[current];
+    char ruta[LOCALIZACIONES_MAXIMA];
+    int longitud_ruta = 0;
+    int actual = indice_destino;
+    while (actual != -1) {
+        ruta[longitud_ruta++] = actual + 'A';
+        actual = nodos_anteriores[actual];
     }
 
     // Imprime el recorrido invertido
-    for (int i = length - 1; i >= 0; i--) {
-        printf("%c", route[i]);
+    for (int i = longitud_ruta - 1; i >= 0; i--) {
+        printf("%c", ruta[i]);
         if (i > 0) {
             printf(" -> ");
         }
@@ -162,24 +166,24 @@ void MostrarRutaOptima(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA]
     printf("\n");
 }
 
-void MostrarRutasDadoOrigen(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], char origin, float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
+void MostrarRutasDadoOrigen(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], char origen, float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
     
 	// Inicialización ASCII, se asume que el destino y el origen esta en un rango A-Z
-	int originIndex = origin - 'A';
+	int indice_origen = origen - 'A';
 
-    printf("\nTodas las rutas desde %c:\n", origin);
+    printf("\nTodas las rutas desde %c:\n", origen);
 
-    for (int destIndex = 0; destIndex < LOCALIZACIONES_MAXIMA; destIndex++) { // Buscar hasta que se acaben las posibles opciones
-        if (destIndex != originIndex) { // Validación para que un nodo no se busque consigo mismo
-            MostrarRutaOptima(grafo, distancias, origin, destIndex + 'A', nodos_anteriores); // Ir alternando constantemente el nodo de destino
+    for (int indice_destino = 0; indice_destino < LOCALIZACIONES_MAXIMA; indice_destino++) { // Buscar hasta que se acaben las posibles opciones
+        if (indice_destino != indice_origen) { // Validación para que un nodo no se busque consigo mismo
+            MostrarRutaOptima(grafo, distancias, origen, indice_destino + 'A', nodos_anteriores); // Ir alternando constantemente el nodo de destino
         }
     }
 }
 
-void showMenu(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
-    int choice;
-    char origin, destination;
-	int sourceNode;
+void MostrarMenu(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float distancias[LOCALIZACIONES_MAXIMA], int nodos_anteriores[LOCALIZACIONES_MAXIMA]) {
+    int opcion;
+    char origen, destino;
+	int nodo_origen_busqueda;
 	
     do {
         printf("\nMenu:\n");
@@ -188,40 +192,40 @@ void showMenu(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float d
         printf("3. Salir\n");
 
         printf("Ingrese su eleccion: ");
-        scanf("%d", &choice);
+        scanf("%d", &opcion);
 
-        switch (choice) {
+        switch (opcion) {
             case 1:
                 printf("Ingrese el origen (A-J): ");
-                scanf(" %c", &origin);
-                if (ValidarRangoLetras(origin) == 0) {
+                scanf(" %c", &origen);
+                if (ValidarRangoLetras(origen) == 0) {
         			printf("Error: El origen debe estar en el rango ASCII de 'A' a 'J'\n");
         			break; // Retornar al menú principal
     			}
-    			sourceNode= origin - 'A';
-    			dijkstra(grafo, sourceNode, distancias, nodos_anteriores);
-                printf("Destinos desde %c:\n", origin);
-                MostrarRutasDadoOrigen(grafo, origin, distancias, nodos_anteriores);
+    			nodo_origen_busqueda= origen - 'A';
+    			dijkstra(grafo, nodo_origen_busqueda, distancias, nodos_anteriores);
+                printf("Destinos desde %c:\n", origen);
+                MostrarRutasDadoOrigen(grafo, origen, distancias, nodos_anteriores);
                 for (int i = 0; i < LOCALIZACIONES_MAXIMA; i++) {
         			distancias[i] = INT_MAX;
     			}
                 break;
             case 2:
                 printf("Ingrese el origen (A-J): ");
-                scanf(" %c", &origin);
-                if (ValidarRangoLetras(origin) == 0) {
+                scanf(" %c", &origen);
+                if (ValidarRangoLetras(origen) == 0) {
         			printf("Error: El origen debe estar en el rango ASCII de 'A' a 'J'\n");
         			break; // Retornar al menú principal
     			}
                 printf("Ingrese el destino (A-J): ");
-                scanf(" %c", &destination);
-                if (ValidarRangoLetras(destination) == 0) {
+                scanf(" %c", &destino);
+                if (ValidarRangoLetras(destino) == 0) {
         			printf("Error: El origen debe estar en el rango ASCII de 'A' a 'J'\n");
         			break; // Retornar al menú principal
     			}
-    			sourceNode= origin - 'A';
-    			dijkstra(grafo, sourceNode, distancias, nodos_anteriores);
-                MostrarRutaOptima(grafo, distancias, origin, destination, nodos_anteriores);
+    			nodo_origen_busqueda= origen - 'A';
+    			dijkstra(grafo, nodo_origen_busqueda, distancias, nodos_anteriores);
+                MostrarRutaOptima(grafo, distancias, origen, destino, nodos_anteriores);
                 for (int i = 0; i < LOCALIZACIONES_MAXIMA; i++) {
         			distancias[i] = INT_MAX;
     			}
@@ -233,5 +237,5 @@ void showMenu(Rutas grafo[LOCALIZACIONES_MAXIMA][LOCALIZACIONES_MAXIMA], float d
                 printf("Opcion no valida. Intente nuevamente.\n");
         }
 
-    } while (choice != 3);
+    } while (opcion != 3);
 }
